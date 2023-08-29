@@ -2,6 +2,7 @@ package com.reactor.webflux.springwebflux.controllers;
 
 import com.reactor.webflux.springwebflux.models.dao.ProductoDao;
 import com.reactor.webflux.springwebflux.models.documents.ProductoDocument;
+import com.reactor.webflux.springwebflux.services.ProductService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,19 +14,16 @@ import java.time.Duration;
 @Controller
 public class ProductosController {
     private final ProductoDao productoDao;
+    private final ProductService productService;
 
-    public ProductosController(ProductoDao productoDao) {
+    public ProductosController(ProductoDao productoDao, ProductService productService) {
         this.productoDao = productoDao;
+        this.productService = productService;
     }
 
     @GetMapping({"/listar", "/"})
     public String listar(Model model) {
-        Flux<ProductoDocument> productos = this.productoDao.findAll()
-                        .map(productoDocument -> {
-                            String name = productoDocument.getNombre();
-                            productoDocument.setNombre(name.toUpperCase());
-                            return productoDocument;
-                        });
+        Flux<ProductoDocument> productos = this.productService.findAll();
         model.addAttribute("productos", productos);
         model.addAttribute("titulo", "Listado de productos");
         return "listar";
