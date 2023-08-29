@@ -3,14 +3,21 @@ package com.reactor.webflux.springwebflux.models.documents;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import java.util.Date;
 
 @Document(collection = "productos")
 public class ProductoDocument {
+
     @Id
     private String id;
+
     private String nombre;
+
     private Double price;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date createAt;
 
     public ProductoDocument(String nombre, Double price) {
