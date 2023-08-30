@@ -3,6 +3,7 @@ package com.reactor.webflux.springwebflux.controllers;
 import com.reactor.webflux.springwebflux.models.dao.ProductoDao;
 import com.reactor.webflux.springwebflux.models.documents.ProductoDocument;
 import com.reactor.webflux.springwebflux.services.ProductService;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,7 +19,6 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 
 @Controller
-@SessionAttributes("producto")
 @Slf4j
 public class ProductosController {
     private final ProductService productService;
@@ -36,25 +36,35 @@ public class ProductosController {
     }
 
     @GetMapping("/form")
-    public Mono<String> crear(Model model){
+    public Mono<String> crear(Model model) {
         model.addAttribute("producto", new ProductoDocument());
         model.addAttribute("titulo", "Formulario de producto");
+        model.addAttribute("boton", "Crear");
         return Mono.just("form");
     }
 
     @GetMapping("/form/{id}")
-    public Mono<String> editar(@PathVariable String id, Model model){
-        Mono<ProductoDocument> producto = this.productService.findById(id)
-                        .doOnNext(productoDocument -> log.info(productoDocument.toString()))
-                        .defaultIfEmpty(new ProductoDocument());
-        model.addAttribute("titulo", "Editar Producto");
-        model.addAttribute("producto", producto);
-        return Mono.just("form");
+    public Mono<String> editar(@PathVariable String id, Model model) {
+        return this.productService.findById(id)
+                .doOnNext(productoDocument -> {
+                    log.info(productoDocument.toString());
+                    model.addAttribute("titulo", "Editar Producto");
+                    model.addAttribute("producto", productoDocument);
+                    model.addAttribute("boton", "Editar");
+                })
+                .defaultIfEmpty(new ProductoDocument())
+                .flatMap(productoDocument -> {
+                    if(productoDocument.getId() == null){
+                        return Mono.error(new InterruptedException("No existe el producto"));
+                    }
+                    return Mono.just(productoDocument);
+                })
+                .then(Mono.just("form"))
+                .onErrorResume(ex -> Mono.just("redirect:/listar?error=no+existe+el+producto"));
     }
 
     @PostMapping("/form")
-    public Mono<String> guardar(ProductoDocument productoDocument, SessionStatus sessionStatus){
-        sessionStatus.setComplete();
+    public Mono<String> guardar(@Valid ProductoDocument productoDocument) {
         return this.productService.save(productoDocument).then(Mono.just("redirect:/listar"));
     }
 

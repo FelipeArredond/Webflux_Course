@@ -1,5 +1,7 @@
 package com.reactor.webflux.springwebflux.models.documents;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -13,12 +15,15 @@ public class ProductoDocument {
     @Id
     private String id;
 
+    @NotEmpty
     private String nombre;
 
+    @NotNull
     private Double price;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date createAt;
+    private CategoryDocument categoryDocument;
 
     public ProductoDocument(String nombre, Double price) {
         this.nombre = nombre;
