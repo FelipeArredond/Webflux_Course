@@ -3,10 +3,14 @@ package com.reactor.webflux.springwebflux.controllers;
 import com.reactor.webflux.springwebflux.models.dao.ProductoDao;
 import com.reactor.webflux.springwebflux.models.documents.ProductoDocument;
 import com.reactor.webflux.springwebflux.services.ProductService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.support.SessionStatus;
 import org.thymeleaf.spring6.context.webflux.ReactiveDataDriverContextVariable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -14,6 +18,8 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 
 @Controller
+@SessionAttributes("producto")
+@Slf4j
 public class ProductosController {
     private final ProductService productService;
 
@@ -36,8 +42,19 @@ public class ProductosController {
         return Mono.just("form");
     }
 
+    @GetMapping("/form/{id}")
+    public Mono<String> editar(@PathVariable String id, Model model){
+        Mono<ProductoDocument> producto = this.productService.findById(id)
+                        .doOnNext(productoDocument -> log.info(productoDocument.toString()))
+                        .defaultIfEmpty(new ProductoDocument());
+        model.addAttribute("titulo", "Editar Producto");
+        model.addAttribute("producto", producto);
+        return Mono.just("form");
+    }
+
     @PostMapping("/form")
-    public Mono<String> guardar(ProductoDocument productoDocument){
+    public Mono<String> guardar(ProductoDocument productoDocument, SessionStatus sessionStatus){
+        sessionStatus.setComplete();
         return this.productService.save(productoDocument).then(Mono.just("redirect:/listar"));
     }
 
